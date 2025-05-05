@@ -1,0 +1,27 @@
+name: CI
+
+on: push
+
+env:
+  CARGO_TERM_COLOR: always
+  # workaround bindgen issue https://github.com/KyleMayes/clang-sys/issues/181#issuecomment-2140506444
+  BINDGEN_EXTRA_CLANG_ARGS_aarch64-apple-darwin: "-I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include"
+
+jobs:
+  ci:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: rustup
+        run: |
+          rustup update nightly
+          rustup component add --toolchain nightly clippy
+      - name: Lint
+        run: |
+          cargo clippy -- -D warnings
+      - name: Build
+        run: cargo build --examples --verbose
